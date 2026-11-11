@@ -1,0 +1,995 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#ffffff">
+<meta name="color-scheme" content="light">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Planner">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" href="icon-192.png">
+<title>Lerarenplanner</title>
+<style>
+  :root{
+    --ink:#15171c; --muted:#6b7280; --soft:#9ca3af; --line:#e5e7eb; --bg:#f2f3f6; --accent:#2f5bea;
+    --c-print:#2f5bea; --c-uitdelen:#0f9d6b; --c-ophalen:#d97706; --c-varia:#7c3aed; --c-inhaal:#0891b2; --c-lvs:#db2777;
+  }
+  *{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%}
+  body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.4 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;-webkit-tap-highlight-color:transparent;padding-bottom:calc(40px + env(safe-area-inset-bottom));overscroll-behavior-y:contain}
+  button,input,select,textarea{font:inherit;color:inherit}
+  button{cursor:pointer}
+  .ic{display:inline-grid;place-items:center;line-height:0}
+  .ic svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+
+  /* Kop */
+  .top{position:sticky;top:0;z-index:10;background:rgba(255,255,255,.94);-webkit-backdrop-filter:saturate(180%) blur(14px);backdrop-filter:saturate(180%) blur(14px);border-bottom:1px solid var(--line);padding:calc(6px + env(safe-area-inset-top)) calc(8px + env(safe-area-inset-right)) 10px calc(8px + env(safe-area-inset-left))}
+  .top-row{display:flex;align-items:center;gap:2px;max-width:640px;margin:0 auto}
+  .ib{flex:none;width:44px;height:44px;border:0;background:transparent;border-radius:12px;display:grid;place-items:center}
+  .ib:active{background:#eceef2}
+  .titel{flex:1;min-width:0;position:relative;text-align:center;padding:2px 0}
+  #dagnaam{font-size:21px;font-weight:700;letter-spacing:-.02em;line-height:1.15}
+  #datumtekst{font-size:13px;color:var(--muted)}
+  #datum{position:absolute;inset:0;width:100%;height:100%;opacity:0;border:0;-webkit-appearance:none;appearance:none}
+  .week{display:flex;gap:6px;max-width:640px;margin:8px auto 0}
+  .wd{flex:1;position:relative;border:0;background:#f1f2f5;border-radius:12px;padding:6px 0 7px;display:flex;flex-direction:column;align-items:center;font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+  .wd b{font-size:17px;color:var(--ink);letter-spacing:0}
+  .wd.vandaag{box-shadow:inset 0 0 0 1.5px var(--accent)}
+  .wd.actief{background:var(--ink);color:#c9ccd3;box-shadow:none}
+  .wd.actief b{color:#fff}
+  .wd i{position:absolute;top:6px;right:8px;width:6px;height:6px;border-radius:50%;background:var(--accent)}
+  .wd.actief i{background:#fff}
+  .vandaagknop{flex:none;border:0;border-radius:12px;background:#eef2ff;color:#3730a3;font-size:11.5px;font-weight:700;padding:0 8px}
+
+  main{max-width:640px;margin:0 auto;padding:12px calc(12px + env(safe-area-inset-right)) 0 calc(12px + env(safe-area-inset-left))}
+  .banner{background:#fff;border-radius:16px;padding:12px 12px 12px 14px;margin-bottom:12px;display:flex;align-items:center;gap:10px;box-shadow:0 1px 2px rgba(0,0,0,.05)}
+  .banner img{width:40px;height:40px;border-radius:10px}
+  .banner div{flex:1;font-size:14px}
+  .banner b{display:block}
+  .banner small{color:var(--muted)}
+  .kleinknop{border:0;border-radius:10px;background:var(--ink);color:#fff;font-weight:600;font-size:14px;height:36px;padding:0 12px}
+
+  /* Kaarten */
+  .card{--c:var(--ink);background:#fff;border-radius:16px;margin-bottom:12px;overflow:hidden;box-shadow:0 1px 2px rgba(0,0,0,.05)}
+  .card-head{display:flex;align-items:center;gap:8px;padding:10px 8px 8px 14px}
+  .card-head .bar{width:4px;height:20px;border-radius:2px;background:var(--c)}
+  .card-head h2{margin:0;font-size:16px;font-weight:700;flex:1;min-width:0}
+  .cnt{font-size:13px;color:var(--soft);font-weight:600;margin-left:4px}
+  .add{flex:none;height:38px;padding:0 12px 0 10px;border:0;border-radius:11px;background:#f1f2f5;font-weight:600;font-size:14px;display:inline-flex;gap:4px;align-items:center}
+  .add:active{background:#e5e7eb}
+  .add .ic svg{width:18px;height:18px}
+  .rij{display:flex;align-items:flex-start;gap:12px;padding:11px 14px;border-top:1px solid #f0f1f3}
+  .chk{flex:none;width:28px;height:28px;margin:0;-webkit-appearance:none;appearance:none;border:2px solid #c4c8cf;border-radius:8px;background:#fff}
+  .chk:checked{background:var(--ink) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 6 9 17l-5-5'/%3E%3C/svg%3E") center/18px no-repeat;border-color:var(--ink)}
+  .kol{flex:1;min-width:0}
+  .inhoud{display:block;width:100%;border:0;background:transparent;text-align:left;padding:3px 0 0}
+  .hoofd{font-size:15.5px;font-weight:500;word-break:break-word;white-space:pre-wrap}
+  .hoofd.leeg{color:var(--soft);font-weight:400}
+  .sub{display:flex;flex-wrap:wrap;align-items:center;gap:3px 10px;margin-top:3px;font-size:13px;color:var(--muted)}
+  .sub .klas{font-weight:700;color:var(--ink)}
+  .sub .ic svg{width:14px;height:14px}
+  .tag{font-size:11.5px;font-weight:500;padding:1px 8px;border-radius:999px;border:1px solid var(--line)}
+  .tag.cyaan{border-color:#a5f3fc;background:#ecfeff;color:#155e75}
+  .done .hoofd{text-decoration:line-through;color:var(--soft)}
+  .leeg-kaart{padding:2px 14px 14px;color:var(--soft);font-size:14px}
+  .lvsbox{margin-top:8px;padding:10px 12px;background:#fdf2f8;border:1px solid #fbcfe8;border-radius:12px;font-size:14px;line-height:1.45;color:#3b1a2b;white-space:pre-wrap}
+  .kopieer{display:inline-flex;align-items:center;gap:6px;margin-top:8px;height:38px;padding:0 14px;border:1px solid #f9a8d4;border-radius:10px;background:#fff;color:#9d174d;font-weight:700;font-size:14px}
+  .kopieer:active{background:#fce7f3}
+  .kopieer .ic svg{width:16px;height:16px}
+
+  /* Onderbladen */
+  .sheet-wrap{position:fixed;inset:0;z-index:50;display:flex;flex-direction:column;justify-content:flex-end}
+  .sheet-bg{position:absolute;inset:0;background:rgba(15,17,21,.42);opacity:0;transition:opacity .22s}
+  .sheet{position:relative;width:100%;max-width:640px;margin:0 auto;max-height:92vh;max-height:92dvh;display:flex;flex-direction:column;background:#fff;border-radius:20px 20px 0 0;transform:translateY(100%);transition:transform .26s cubic-bezier(.2,.8,.2,1);padding-bottom:env(safe-area-inset-bottom)}
+  .open .sheet{transform:none}
+  .open .sheet-bg{opacity:1}
+  .sheet-head{display:flex;align-items:center;gap:8px;padding:14px 12px 12px 18px;border-bottom:1px solid var(--line)}
+  .sheet-head h3{flex:1;margin:0;font-size:17px;font-weight:700}
+  .klaar{flex:none;height:38px;padding:0 16px;border:0;border-radius:11px;background:var(--ink);color:#fff;font-weight:700}
+  .sheet-body{overflow-y:auto;-webkit-overflow-scrolling:touch;padding:16px 18px 22px;overscroll-behavior:contain}
+  .veld{margin-bottom:18px}
+  .lbl{display:block;font-size:13px;font-weight:700;color:var(--muted);margin-bottom:7px;text-transform:uppercase;letter-spacing:.04em}
+  .inp{display:block;width:100%;min-height:48px;padding:11px 13px;border:1px solid #d9dce1;border-radius:12px;background:#fff;font-size:16px}
+  .inp:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(47,91,234,.15)}
+  textarea.inp{resize:vertical;min-height:88px;line-height:1.45}
+  .chips{display:flex;flex-wrap:wrap;gap:8px}
+  .chipk{min-height:42px;padding:0 15px;border:1px solid #d9dce1;border-radius:999px;background:#fff;font-size:15px;font-weight:600}
+  .chipk.aan{background:var(--ink);border-color:var(--ink);color:#fff}
+  .chipk.plus{border-style:dashed;color:var(--muted);font-weight:500}
+  .chipk.lang{width:100%;text-align:left;border-radius:12px;padding:10px 14px;font-weight:500}
+  .stepper{display:inline-flex;align-items:center;border:1px solid #d9dce1;border-radius:12px;overflow:hidden}
+  .stepper button{width:50px;height:48px;border:0;background:#f4f5f7;font-size:22px;font-weight:500}
+  .stepper input{width:70px;height:48px;border:0;text-align:center;font-size:18px;font-weight:600;-moz-appearance:textfield}
+  .stepper input::-webkit-outer-spin-button,.stepper input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+  .actie{display:flex;align-items:center;gap:12px;width:100%;min-height:52px;padding:0 14px;margin-bottom:8px;border:0;border-radius:12px;background:#f4f5f7;font-size:15.5px;font-weight:600;text-align:left}
+  .actie:active{background:#e8eaee}
+  .actie small{display:block;font-weight:400;color:var(--muted);font-size:12.5px}
+  .actie .ic{color:var(--muted)}
+  .actie.rood{background:#fef2f2;color:#b91c1c}
+  .actie.rood .ic{color:#dc2626}
+  .actie.primair{background:var(--ink);color:#fff;justify-content:center}
+  .actie.primair .ic{color:#fff}
+  .groepkop{font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:18px 0 8px}
+  .groepkop:first-child{margin-top:0}
+  .info{font-size:13.5px;line-height:1.45;background:#f4f5f7;border-radius:12px;padding:10px 12px;margin-bottom:16px}
+  .info.cyaan{background:#ecfeff;color:#155e75}
+  .info.geel{background:#fffbeb;color:#78350f}
+  .info code{background:#fff;border:1px solid var(--line);border-radius:5px;padding:0 4px;font-size:12.5px}
+  .bijlage{display:flex;align-items:center;gap:10px;padding:8px 8px 8px 12px;border:1px solid var(--line);border-radius:12px;margin-bottom:8px}
+  .bijlage button.naam{flex:1;min-width:0;border:0;background:none;text-align:left;padding:6px 0}
+  .bijlage .naam span{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600;color:#1d4ed8}
+  .bijlage small{color:var(--muted)}
+  .x{flex:none;width:40px;height:40px;border:0;border-radius:10px;background:transparent;color:var(--muted);display:grid;place-items:center}
+  .x:active{background:#f1f2f5}
+  .lijstrij{display:flex;align-items:center;gap:8px;padding:6px 0 6px 2px;border-top:1px solid #f0f1f3}
+  .lijstrij:first-child{border-top:0}
+  .lijstrij .t{flex:1;min-width:0;font-weight:600}
+  .lijstrij .t small{display:block;font-weight:400;color:var(--muted);font-size:13px}
+  .rijform{display:flex;gap:8px}
+  .rijform .inp{flex:1}
+  .rijform button{flex:none;border:0;border-radius:12px;background:var(--ink);color:#fff;font-weight:700;padding:0 16px}
+  .schakel{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:48px;font-weight:600}
+  .schakel input{-webkit-appearance:none;appearance:none;width:52px;height:32px;border-radius:999px;background:#d9dce1;position:relative;transition:background .2s;margin:0;flex:none}
+  .schakel input::after{content:"";position:absolute;top:3px;left:3px;width:26px;height:26px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.25);transition:transform .2s}
+  .schakel input:checked{background:#0f9d6b}
+  .schakel input:checked::after{transform:translateX(20px)}
+  .redenkaart{border:1px solid var(--line);border-radius:14px;padding:10px;margin-bottom:10px}
+  .redenkaart .kop{display:flex;align-items:center;gap:6px;margin-bottom:8px}
+  .redenkaart .kop .inp{font-weight:700;min-height:44px}
+  .badge{font-size:11px;font-weight:700;padding:2px 8px;border-radius:999px;background:#fef3c7;color:#92400e;flex:none}
+  .vraagtekst{font-size:16px;line-height:1.5;white-space:pre-line;margin:4px 0 18px}
+  .stappen{margin:0;padding-left:20px;line-height:1.6}
+  .stappen li{margin-bottom:6px}
+
+  .toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom));transform:translateX(-50%) translateY(16px);opacity:0;pointer-events:none;background:var(--ink);color:#fff;padding:11px 16px;border-radius:12px;font-size:14px;box-shadow:0 10px 30px rgba(0,0,0,.25);transition:all .2s;z-index:100;width:max-content;max-width:calc(100vw - 32px);text-align:center}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="top-row">
+    <button class="ib" id="vorige" aria-label="Vorige dag"></button>
+    <div class="titel">
+      <div id="dagnaam">Planner</div>
+      <div id="datumtekst"></div>
+      <input type="date" id="datum" aria-label="Datum kiezen">
+    </div>
+    <button class="ib" id="volgende" aria-label="Volgende dag"></button>
+    <button class="ib" id="menuKnop" aria-label="Menu"></button>
+  </div>
+  <div class="week" id="week"></div>
+</header>
+
+<main id="main"></main>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<input type="file" id="bijlageInput" multiple hidden>
+<input type="file" id="importInput" accept=".json,.html,.htm,application/json,text/html" hidden>
+<datalist id="leerlingenlijst"></datalist>
+
+<script>
+(function () {
+  'use strict';
+
+  // ---------- Vaste gegevens ----------
+  const SECTIES = [
+    { id: 'print',    titel: 'Af te printen', klas: true, aantal: true, check: true, vast: true, label: 'Materiaal', ph: 'bv. werkblad breuken p. 3' },
+    { id: 'uitdelen', titel: 'Uit te delen',  klas: true, check: true, vast: true, label: 'Materiaal', ph: 'Wat deel je uit?' },
+    { id: 'ophalen',  titel: 'Op te halen',   klas: true, check: true, vast: true, label: 'Materiaal', ph: 'Wat haal je op?' },
+    { id: 'varia',    titel: 'Varia / to do', check: true, vast: true, label: 'Omschrijving', ph: 'Wat moet er gebeuren?' },
+    { id: 'inhaal',   titel: 'Inhaaltoetsen', klas: true, leerling: true, inhaal: true, check: true, telt: false, verplaats: false, label: 'Wat moet ingehaald worden?', ph: 'bv. toets Frans hoofdstuk 3' },
+    { id: 'lvs',      titel: 'LVS aanvullen', klas: true, leerling: true, lvs: true, check: true, telt: false, verplaats: false }
+  ];
+  const SECTIE = Object.fromEntries(SECTIES.map(s => [s.id, s]));
+  const DAGNAMEN = ['zondag', 'maandag', 'dinsdag', 'woensdag', 'donderdag', 'vrijdag', 'zaterdag'];
+  const DAGKORT = ['zo', 'ma', 'di', 'wo', 'do', 'vr', 'za'];
+  const MAANDEN = ['januari', 'februari', 'maart', 'april', 'mei', 'juni', 'juli', 'augustus', 'september', 'oktober', 'november', 'december'];
+  const MAX_BIJLAGE = 25 * 1024 * 1024;
+  const LVS_STANDAARD = [
+    { id: 'materiaal', naam: 'Niet in orde met lesmateriaal', tekst: '{voornaam} was op {dag} {datum} niet in orde met het lesmateriaal. Dit komt het leerproces zeker niet ten goede.' },
+    { id: 'chromebook', naam: 'Niet in orde met Chromebook', tekst: '{voornaam} was op {dag} {datum} niet in orde met de Chromebook. Dit komt het leerproces zeker niet ten goede.', voorstel: true },
+    { id: 'verlaten', naam: 'Klas verlaten zonder toestemming', tekst: '{voornaam} heeft op {dag} {datum} de klas verlaten zonder toestemming. Voorstel is om {voornaam} te laten nablijven.' },
+    { id: 'gsm', naam: 'Gsm onterecht gebruikt', tekst: '{voornaam} werd op {dag} {datum} betrapt op het onterecht gebruik van de gsm. Voorstel is om de gsm x dagen af te geven op het leerlingensecretariaat.' },
+    { id: 'medewerking', naam: 'Geen medewerking in de klas', tekst: '{voornaam} werkte op {dag} {datum} niet mee in de klas. Dit komt het leerproces zeker niet ten goede.', voorstel: true },
+    { id: 'storend', naam: 'Storend gedrag', tekst: '{voornaam} vertoonde op {dag} {datum} storend gedrag in de klas. Hierdoor werd de les verstoord voor de hele klasgroep.', voorstel: true },
+    { id: 'verwijderd', naam: 'Uit de klas verwijderd', tekst: '{voornaam} werd op {dag} {datum} uit de klas verwijderd. Reden: …', voorstel: true }
+  ];
+  const INHAAL_STANDAARD = ['In de inhaalmap', 'Bookwidget in vakmap op SS'];
+
+  const ICONS = {
+    chevL: '<path d="m15 18-6-6 6-6"/>',
+    chevR: '<path d="m9 18 6-6-6-6"/>',
+    more: '<circle cx="12" cy="5" r="1.2"/><circle cx="12" cy="12" r="1.2"/><circle cx="12" cy="19" r="1.2"/>',
+    plus: '<path d="M12 5v14"/><path d="M5 12h14"/>',
+    x: '<path d="M18 6 6 18"/><path d="m6 6 12 12"/>',
+    clip: '<path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48"/>',
+    copy: '<rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>',
+    arrow: '<path d="M5 12h14"/><path d="m12 5 7 7-7 7"/>',
+    forward: '<path d="m6 17 5-5-5-5"/><path d="m13 17 5-5-5-5"/>',
+    bookmark: '<path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z"/>',
+    trash: '<path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>',
+    users: '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
+    repeat: '<path d="m17 2 4 4-4 4"/><path d="M3 11v-1a4 4 0 0 1 4-4h14"/><path d="m7 22-4-4 4-4"/><path d="M21 13v1a4 4 0 0 1-4 4H3"/>',
+    text: '<path d="M4 7V4h16v3"/><path d="M9 20h6"/><path d="M12 4v16"/>',
+    pin: '<path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/>',
+    upload: '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>',
+    download: '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>',
+    phone: '<rect x="5" y="2" width="14" height="20" rx="2"/><path d="M12 18h.01"/>',
+    undo: '<path d="M3 7v6h6"/><path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"/>',
+    file: '<path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/>'
+  };
+
+  // ---------- Hulpfuncties ----------
+  const $ = id => document.getElementById(id);
+  function icon(naam) {
+    const s = document.createElement('span');
+    s.className = 'ic';
+    s.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true">' + ICONS[naam] + '</svg>';
+    return s;
+  }
+  function h(tag, attrs, ...kids) {
+    const el = document.createElement(tag);
+    for (const [k, v] of Object.entries(attrs || {})) {
+      if (v == null || v === false) continue;
+      if (k.startsWith('on')) el.addEventListener(k.slice(2), v);
+      else if (k === 'class') el.className = v;
+      else if (k === 'value' || k === 'checked') el[k] = v;
+      else el.setAttribute(k, v === true ? '' : v);
+    }
+    for (const c of kids.flat(3)) {
+      if (c == null || c === false) continue;
+      el.append(c.nodeType ? c : String(c));
+    }
+    return el;
+  }
+  const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+  const pad = n => String(n).padStart(2, '0');
+  const iso = d => d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
+  function parseISO(s) { const [y, m, d] = s.split('-').map(Number); return new Date(y, m - 1, d); }
+  const vandaag = () => iso(new Date());
+  function verschuif(s, n) { const d = parseISO(s); d.setDate(d.getDate() + n); return iso(d); }
+  function volgendeSchooldag(s) { const d = parseISO(s); do { d.setDate(d.getDate() + 1); } while (d.getDay() === 0 || d.getDay() === 6); return iso(d); }
+  function isoWeek(s) {
+    const d = parseISO(s);
+    const t = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+    const dag = t.getUTCDay() || 7;
+    t.setUTCDate(t.getUTCDate() + 4 - dag);
+    const jan1 = new Date(Date.UTC(t.getUTCFullYear(), 0, 1));
+    return Math.ceil(((t - jan1) / 86400000 + 1) / 7);
+  }
+  const dagNaam = s => DAGNAMEN[parseISO(s).getDay()];
+  const hoofdletter = t => t.charAt(0).toUpperCase() + t.slice(1);
+  function langeDatum(s) { const d = parseISO(s); return d.getDate() + ' ' + MAANDEN[d.getMonth()] + ' ' + d.getFullYear(); }
+  function korteDatum(s) { const d = parseISO(s); return DAGKORT[d.getDay()] + ' ' + d.getDate() + '/' + (d.getMonth() + 1); }
+  function dagMaand(s) { const d = parseISO(s); return d.getDate() + '/' + (d.getMonth() + 1); }
+  function cijferDatum(s) { const d = parseISO(s); return pad(d.getDate()) + '/' + pad(d.getMonth() + 1) + '/' + d.getFullYear(); }
+  function grootte(n) {
+    if (!n && n !== 0) return '';
+    if (n < 1024 * 1024) return Math.max(1, Math.round(n / 1024)) + ' kB';
+    return (n / 1024 / 1024).toFixed(1).replace('.', ',') + ' MB';
+  }
+  const heeftInhoud = it => !!((it.tekst || '').trim() || it.klas || (it.leerling || '').trim() || it.reden || it.waar || (it.bijlagen && it.bijlagen.length));
+  function inhaalDoel(s) {
+    const stap = { 1: 1, 4: 5, 5: 4, 2: 2, 3: 1 }[parseISO(s).getDay()];
+    return stap ? verschuif(s, stap) : null;
+  }
+  function inhaalBronnen(s) {
+    const wd = parseISO(s).getDay();
+    if (wd === 2) return [5, 4, 1].map(n => verschuif(s, -n));
+    if (wd === 4) return [2, 1].map(n => verschuif(s, -n));
+    return [];
+  }
+
+  let toastTimer;
+  function toast(t) {
+    const el = $('toast');
+    el.textContent = t;
+    el.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => el.classList.remove('show'), 3200);
+  }
+
+  // ---------- Gegevens (zelfde formaat als de pc-planner) ----------
+  const kopieLvs = () => LVS_STANDAARD.map(r => ({ ...r }));
+  function nieuweData() { return { versie: 3, klassen: [], sjablonen: [], lvsRedenen: kopieLvs(), inhaalPlaatsen: [...INHAAL_STANDAARD], dagen: {} }; }
+  function normaliseer(d) {
+    const n = nieuweData();
+    if (!d || typeof d !== 'object') return n;
+    if (Array.isArray(d.klassen)) n.klassen = d.klassen.filter(k => typeof k === 'string' && k.trim());
+    if (Array.isArray(d.sjablonen)) n.sjablonen = d.sjablonen.filter(s => s && SECTIE[s.sectie] && SECTIE[s.sectie].vast);
+    if (Array.isArray(d.lvsRedenen)) n.lvsRedenen = d.lvsRedenen.filter(r => r && r.id && typeof r.naam === 'string')
+      .map(r => (typeof r.tekst === 'string' && r.tekst.startsWith('Leerling {voornaam}')) ? { ...r, tekst: r.tekst.slice(9) } : r);
+    if (Array.isArray(d.inhaalPlaatsen)) n.inhaalPlaatsen = d.inhaalPlaatsen.filter(x => typeof x === 'string' && x.trim());
+    if (d.dagen && typeof d.dagen === 'object') {
+      for (const [k, v] of Object.entries(d.dagen)) {
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(k) || !v) continue;
+        n.dagen[k] = {
+          items: (Array.isArray(v.items) ? v.items : []).map(i => (i && i.sectie === 'notas') ? { ...i, sectie: 'lvs' } : i)
+            .filter(i => i && SECTIE[i.sectie]).map(i => ({ ...i, bijlagen: Array.isArray(i.bijlagen) ? i.bijlagen : [] })),
+          gegenereerd: Array.isArray(v.gegenereerd) ? v.gegenereerd : []
+        };
+      }
+    }
+    return n;
+  }
+
+  // Opslag op het toestel (IndexedDB, met localStorage als reserve)
+  const Opslag = {
+    db: null,
+    open() {
+      return new Promise((res, rej) => {
+        if (!('indexedDB' in window)) return rej(new Error('geen IndexedDB'));
+        const r = indexedDB.open('lerarenplanner', 1);
+        r.onupgradeneeded = () => r.result.createObjectStore('kv');
+        r.onsuccess = () => { this.db = r.result; res(); };
+        r.onerror = () => rej(r.error);
+      });
+    },
+    get(k) {
+      if (!this.db) { try { return Promise.resolve(JSON.parse(localStorage.getItem('planner-' + k) || 'null')); } catch (e) { return Promise.resolve(null); } }
+      return new Promise((res, rej) => {
+        const q = this.db.transaction('kv').objectStore('kv').get(k);
+        q.onsuccess = () => res(q.result);
+        q.onerror = () => rej(q.error);
+      });
+    },
+    set(k, v) {
+      if (!this.db) { localStorage.setItem('planner-' + k, JSON.stringify(v)); return Promise.resolve(); }
+      return new Promise((res, rej) => {
+        const tx = this.db.transaction('kv', 'readwrite');
+        tx.objectStore('kv').put(v, k);
+        tx.oncomplete = () => res();
+        tx.onerror = () => rej(tx.error);
+      });
+    }
+  };
+
+  let data = nieuweData();
+  let datum = vandaag();
+  let bewaarTimer = null;
+  let bewaarFoutGemeld = false;
+
+  function markeer() {
+    clearTimeout(bewaarTimer);
+    bewaarTimer = setTimeout(bewaar, 300);
+  }
+  async function bewaar() {
+    clearTimeout(bewaarTimer);
+    bewaarTimer = null;
+    try { await Opslag.set('data', JSON.parse(JSON.stringify(data))); bewaarFoutGemeld = false; }
+    catch (e) {
+      if (!bewaarFoutGemeld) toast('Bewaren op dit toestel is mislukt. Maak een back-up via het menu.');
+      bewaarFoutGemeld = true;
+    }
+  }
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden' && bewaarTimer) bewaar(); });
+  window.addEventListener('pagehide', () => { if (bewaarTimer) bewaar(); });
+
+  function getDag(s, maak) {
+    if (!data.dagen[s] && maak) data.dagen[s] = { items: [], gegenereerd: [] };
+    return data.dagen[s];
+  }
+  function ruimOp(s) {
+    const d = data.dagen[s];
+    if (d && !d.items.length && !d.gegenereerd.length) delete data.dagen[s];
+  }
+  function leegItem(sectie) { return { id: uid(), sectie, klas: '', tekst: '', aantal: '', leerling: '', gedaan: false, bijlagen: [] }; }
+  function itemUitSjabloon(sj) { return { ...leegItem(sj.sectie), klas: sj.klas || '', tekst: sj.tekst || '', aantal: sj.aantal || '' }; }
+  function genereer(s) {
+    const wd = parseISO(s).getDay();
+    let n = 0;
+    for (const sj of data.sjablonen) {
+      if (!sj.herhaal || !Array.isArray(sj.dagen) || !sj.dagen.includes(wd)) continue;
+      if (sj.vanaf && s < sj.vanaf) continue;
+      const bestaand = data.dagen[s];
+      if (bestaand && bestaand.gegenereerd.includes(sj.id)) continue;
+      const dag = getDag(s, true);
+      dag.items.push(itemUitSjabloon(sj));
+      dag.gegenereerd.push(sj.id);
+      n++;
+    }
+    if (n) markeer();
+  }
+  function lvsTekst(it, dagKey) {
+    const r = data.lvsRedenen.find(x => x.id === it.reden);
+    if (!r) return it.tekst || '';
+    const vn = (it.leerling || '').trim() || '…';
+    return r.tekst.replace(/\{voornaam\}/gi, vn).replace(/\{dag\}/gi, dagNaam(dagKey)).replace(/\{datum\}/gi, cijferDatum(dagKey));
+  }
+  const sorteerKlassen = () => data.klassen.sort((a, b) => a.localeCompare(b, 'nl', { numeric: true, sensitivity: 'base' }));
+
+  // ---------- Onderbladen (sheets) ----------
+  const stapel = [];
+  function openSheet(opts) {
+    const body = h('div', { class: 'sheet-body' });
+    const ent = { opts, body };
+    const klaar = h('button', { class: 'klaar', type: 'button', onclick: () => {
+      if (opts.onKlaar && opts.onKlaar() === false) return;
+      sluitSheet();
+    } }, opts.knop || 'Klaar');
+    const sheet = h('div', { class: 'sheet', role: 'dialog', 'aria-modal': 'true', 'aria-label': opts.titel },
+      h('div', { class: 'sheet-head' }, h('h3', {}, opts.titel), opts.geenKnop ? null : klaar), body);
+    const bg = h('div', { class: 'sheet-bg', onclick: () => sluitSheet() });
+    ent.wrap = h('div', { class: 'sheet-wrap' }, bg, sheet);
+    ent.herbouw = () => { const st = body.scrollTop; body.replaceChildren(...[].concat(opts.bouw(ent)).filter(Boolean)); body.scrollTop = st; };
+    ent.herbouw();
+    document.body.append(ent.wrap);
+    document.body.style.overflow = 'hidden';
+    stapel.push(ent);
+    history.pushState({ blad: stapel.length }, '');
+    requestAnimationFrame(() => requestAnimationFrame(() => ent.wrap.classList.add('open')));
+    return ent;
+  }
+  // Sluit het bovenste blad. 'dan' wordt uitgevoerd nadat het blad weg is.
+  function sluitSheet(dan) {
+    if (!stapel.length) { if (dan) dan(); return; }
+    stapel[stapel.length - 1].dan = dan;
+    history.back();
+  }
+  window.addEventListener('popstate', () => {
+    const ent = stapel.pop();
+    if (!ent) return;
+    ent.wrap.classList.remove('open');
+    setTimeout(() => ent.wrap.remove(), 260);
+    if (!stapel.length) document.body.style.overflow = '';
+    if (ent.opts.onClose) ent.opts.onClose();
+    if (ent.dan) setTimeout(ent.dan, 30);
+  });
+
+  function vraag(tekst, ja, gevaar) {
+    return new Promise(res => {
+      let antwoord = false;
+      openSheet({
+        titel: 'Even bevestigen', geenKnop: true,
+        onClose: () => res(antwoord),
+        bouw: () => [
+          h('p', { class: 'vraagtekst' }, tekst),
+          h('button', { class: 'actie ' + (gevaar ? 'rood' : 'primair'), type: 'button', style: 'justify-content:center', onclick: () => { antwoord = true; sluitSheet(); } }, ja || 'OK'),
+          h('button', { class: 'actie', type: 'button', style: 'justify-content:center', onclick: () => sluitSheet() }, 'Annuleren')
+        ]
+      });
+    });
+  }
+
+  // ---------- Hoofdscherm ----------
+  function renderKop() {
+    $('dagnaam').textContent = hoofdletter(dagNaam(datum));
+    $('datumtekst').textContent = langeDatum(datum) + ' · week ' + isoWeek(datum);
+    $('datum').value = datum;
+    const d = parseISO(datum);
+    const ma = verschuif(datum, -((d.getDay() + 6) % 7));
+    const week = $('week');
+    week.replaceChildren();
+    for (let i = 0; i < 5; i++) {
+      const s = verschuif(ma, i);
+      const dg = data.dagen[s];
+      const heeft = (dg && dg.items.some(heeftInhoud)) || inhaalBronnen(s).some(b => data.dagen[b] && data.dagen[b].items.some(x => x.sectie === 'inhaal' && heeftInhoud(x)));
+      week.append(h('button', { class: 'wd' + (s === datum ? ' actief' : '') + (s === vandaag() ? ' vandaag' : ''), type: 'button', 'aria-label': hoofdletter(DAGNAMEN[parseISO(s).getDay()]) + ' ' + langeDatum(s), onclick: () => { datum = s; render(); } },
+        DAGKORT[parseISO(s).getDay()], h('b', {}, parseISO(s).getDate()), heeft ? h('i') : null));
+    }
+    const vd = vandaag();
+    if (datum !== vd) week.append(h('button', { class: 'vandaagknop', type: 'button', onclick: () => { datum = vd; render(); } }, 'Vandaag'));
+  }
+
+  function render() {
+    genereer(datum);
+    renderKop();
+    const main = $('main');
+    main.replaceChildren(installBanner(), ...SECTIES.map(renderKaart));
+    updateLeerlingen();
+  }
+
+  function itemsVan(sectieId) {
+    const dag = data.dagen[datum];
+    return dag ? dag.items.filter(i => i.sectie === sectieId) : [];
+  }
+
+  function renderKaart(sec) {
+    const items = itemsVan(sec.id);
+    const spiegels = [];
+    if (sec.inhaal) {
+      for (const bron of inhaalBronnen(datum)) {
+        const bd = data.dagen[bron];
+        if (bd) for (const it of bd.items) if (it.sectie === 'inhaal' && heeftInhoud(it)) spiegels.push([it, bron]);
+      }
+    }
+    const n = items.filter(heeftInhoud).length + spiegels.length;
+    return h('section', { class: 'card', style: '--c:var(--c-' + sec.id + ')' },
+      h('div', { class: 'card-head' },
+        h('span', { class: 'bar' }), h('h2', {}, sec.titel, n ? h('span', { class: 'cnt' }, n) : null),
+        h('button', { class: 'add', type: 'button', 'aria-label': 'Toevoegen aan ' + sec.titel, onclick: () => nieuwItem(sec) }, icon('plus'), 'Nieuw')),
+      spiegels.map(([it, bron]) => itemRij(it, sec, bron)),
+      items.map(it => itemRij(it, sec, null)),
+      (items.length || spiegels.length) ? null : h('div', { class: 'leeg-kaart' }, 'Niets gepland.')
+    );
+  }
+
+  function itemRij(it, sec, bron) {
+    const rij = h('div', { class: 'rij' + (it.gedaan ? ' done' : '') });
+    rij.append(h('input', {
+      type: 'checkbox', class: 'chk', checked: !!it.gedaan,
+      'aria-label': sec.lvs ? 'In LVS gezet' : sec.inhaal ? 'Ingehaald' : 'Afgewerkt',
+      onchange: e => { it.gedaan = e.target.checked; rij.classList.toggle('done', it.gedaan); markeer(); }
+    }));
+    const sub = [];
+    const reden = sec.lvs ? data.lvsRedenen.find(r => r.id === it.reden) : null;
+    if (it.klas) sub.push(h('span', { class: 'klas' }, it.klas));
+    if (sec.lvs && reden) sub.push(h('span', {}, reden.naam));
+    if (!sec.lvs && it.leerling) sub.push(h('span', {}, it.leerling));
+    if (sec.aantal && it.aantal) sub.push(h('span', {}, it.aantal + '×'));
+    if (sec.inhaal && it.waar) sub.push(h('span', {}, it.waar));
+    if (it.bijlagen && it.bijlagen.length) sub.push(h('span', {}, icon('clip'), ' ' + it.bijlagen.length));
+    if (it.van) sub.push(h('span', { class: 'tag' }, 'uit ' + korteDatum(it.van)));
+    if (sec.inhaal) {
+      if (bron) sub.push(h('span', { class: 'tag cyaan' }, 'ingevuld op ' + korteDatum(bron)));
+      else { const d = inhaalDoel(datum); if (d) sub.push(h('span', { class: 'tag cyaan' }, 'ook op ' + korteDatum(d))); }
+    }
+    let hoofd, leeg = false;
+    if (sec.lvs) { hoofd = (it.leerling || '').trim(); if (!hoofd) { hoofd = 'Voornaam invullen'; leeg = true; } }
+    else { hoofd = (it.tekst || '').trim(); if (!hoofd) { hoofd = 'Tik om in te vullen'; leeg = true; } }
+
+    const kol = h('div', { class: 'kol' },
+      h('button', { class: 'inhoud', type: 'button', onclick: () => openEditor(it, sec, bron, false) },
+        h('div', { class: 'hoofd' + (leeg ? ' leeg' : '') }, hoofd),
+        sub.length ? h('div', { class: 'sub' }, sub) : null));
+    if (sec.lvs && (it.tekst || '').trim()) {
+      kol.append(h('div', { class: 'lvsbox' }, it.tekst),
+        h('button', { class: 'kopieer', type: 'button', onclick: () => kopieer(it.tekst) }, icon('copy'), 'Kopiëren'));
+    }
+    rij.append(kol);
+    return rij;
+  }
+
+  function updateLeerlingen() {
+    const namen = new Set();
+    for (const d of Object.values(data.dagen)) for (const i of d.items) if (i.leerling && i.leerling.trim()) namen.add(i.leerling.trim());
+    $('leerlingenlijst').replaceChildren(...[...namen].sort((a, b) => a.localeCompare(b, 'nl')).map(n => h('option', { value: n })));
+  }
+
+  // ---------- Regel bewerken ----------
+  function nieuwItem(sec) {
+    const it = leegItem(sec.id);
+    getDag(datum, true).items.push(it);
+    openEditor(it, sec, null, true);
+  }
+
+  function chipKeuze(lijst, waarde, kies, plusTekst, plusActie) {
+    return h('div', { class: 'chips' },
+      lijst.map(v => h('button', { class: 'chipk' + (v === waarde ? ' aan' : ''), type: 'button', onclick: () => kies(v === waarde ? '' : v) }, v)),
+      waarde && !lijst.includes(waarde) ? h('button', { class: 'chipk aan', type: 'button', onclick: () => kies('') }, waarde) : null,
+      plusTekst ? h('button', { class: 'chipk plus', type: 'button', onclick: plusActie }, plusTekst) : null);
+  }
+
+  function openEditor(it, sec, bron, nieuw) {
+    const dagKey = bron || datum;
+    let lvsVeld = null;
+    const vernieuwLvs = forceer => {
+      if (!it.reden || (it.handmatig && !forceer)) return;
+      it.tekst = lvsTekst(it, dagKey);
+      it.handmatig = false;
+      if (lvsVeld) lvsVeld.value = it.tekst;
+    };
+    openSheet({
+      titel: sec.titel,
+      onClose: () => {
+        if (!heeftInhoud(it)) { const d = data.dagen[dagKey]; if (d) { d.items = d.items.filter(x => x !== it); ruimOp(dagKey); } }
+        markeer(); render();
+      },
+      bouw: ent => {
+        const delen = [];
+        if (nieuw && sec.vast) {
+          const sjs = data.sjablonen.filter(s => s.sectie === sec.id);
+          if (sjs.length) delen.push(h('div', { class: 'veld' }, h('span', { class: 'lbl' }, 'Vaste taak kiezen'),
+            h('div', { class: 'chips' }, sjs.map(sj => h('button', { class: 'chipk', type: 'button', onclick: () => {
+              it.klas = sj.klas || ''; it.tekst = sj.tekst || ''; it.aantal = sj.aantal || ''; markeer(); ent.herbouw();
+            } }, sj.tekst + (sj.klas ? ' · ' + sj.klas : ''))))));
+        }
+        if (sec.inhaal) {
+          const d = bron ? null : inhaalDoel(datum);
+          if (bron) delen.push(h('div', { class: 'info cyaan' }, 'Ingevuld op ' + dagNaam(bron) + ' ' + dagMaand(bron) + '. Wat je hier aanpast, verandert op beide dagen.'));
+          else if (d) delen.push(h('div', { class: 'info cyaan' }, 'Verschijnt automatisch ook op ' + dagNaam(d) + ' ' + dagMaand(d) + '.'));
+        }
+        if (sec.klas) delen.push(h('div', { class: 'veld' }, h('span', { class: 'lbl' }, 'Klas'),
+          chipKeuze(data.klassen, it.klas, v => { it.klas = v; markeer(); ent.herbouw(); }, '+ Klas', () => openLijst('klassen', () => ent.herbouw()))));
+        if (sec.leerling) delen.push(h('div', { class: 'veld' }, h('label', { class: 'lbl', for: 'f-vn' }, 'Voornaam'),
+          h('input', { id: 'f-vn', class: 'inp', type: 'text', value: it.leerling || '', list: 'leerlingenlijst', autocomplete: 'off', autocapitalize: 'words', placeholder: 'Voornaam van de leerling',
+            oninput: e => { it.leerling = e.target.value; vernieuwLvs(false); markeer(); } })));
+        if (sec.lvs) {
+          delen.push(h('div', { class: 'veld' }, h('span', { class: 'lbl' }, 'Reden'),
+            h('div', { class: 'chips' }, data.lvsRedenen.map(r => h('button', { class: 'chipk lang' + (it.reden === r.id ? ' aan' : ''), type: 'button', onclick: () => {
+              it.reden = it.reden === r.id ? '' : r.id; vernieuwLvs(true); markeer(); ent.herbouw();
+            } }, r.naam)), h('button', { class: 'chipk plus lang', type: 'button', onclick: () => openLvsTeksten(() => ent.herbouw()) }, 'Redenen en teksten aanpassen…'))));
+          lvsVeld = h('textarea', { class: 'inp', id: 'f-lvs', rows: '4', placeholder: 'Kies een reden: de tekst verschijnt hier. Je kunt hem aanpassen.', value: it.tekst || '',
+            oninput: e => { it.tekst = e.target.value; it.handmatig = true; markeer(); } });
+          delen.push(h('div', { class: 'veld' }, h('label', { class: 'lbl', for: 'f-lvs' }, 'Tekst voor het LVS'), lvsVeld,
+            h('div', { style: 'display:flex;gap:8px;flex-wrap:wrap' },
+              h('button', { class: 'kopieer', type: 'button', onclick: () => kopieer(lvsVeld.value) }, icon('copy'), 'Kopiëren'),
+              it.reden ? h('button', { class: 'kopieer', type: 'button', style: 'color:var(--muted);border-color:var(--line)', onclick: () => { vernieuwLvs(true); markeer(); } }, icon('undo'), 'Opnieuw maken') : null)));
+        } else {
+          delen.push(h('div', { class: 'veld' }, h('label', { class: 'lbl', for: 'f-tekst' }, sec.label),
+            h('textarea', { class: 'inp', id: 'f-tekst', rows: '3', placeholder: sec.ph, value: it.tekst || '',
+              oninput: e => { it.tekst = e.target.value; markeer(); } })));
+        }
+        if (sec.aantal) {
+          const inp = h('input', { type: 'number', inputmode: 'numeric', min: '1', value: it.aantal || '', placeholder: '–', 'aria-label': 'Aantal keer',
+            oninput: e => { it.aantal = e.target.value; markeer(); } });
+          const stap = n => { const v = Math.max(0, (parseInt(it.aantal, 10) || 0) + n); it.aantal = v ? String(v) : ''; inp.value = it.aantal; markeer(); };
+          delen.push(h('div', { class: 'veld' }, h('span', { class: 'lbl' }, 'Aantal keer'),
+            h('div', { class: 'stepper' }, h('button', { type: 'button', 'aria-label': 'Minder', onclick: () => stap(-1) }, '−'), inp, h('button', { type: 'button', 'aria-label': 'Meer', onclick: () => stap(1) }, '+'))));
+        }
+        if (sec.inhaal) delen.push(h('div', { class: 'veld' }, h('span', { class: 'lbl' }, 'Waar terug te vinden?'),
+          chipKeuze(data.inhaalPlaatsen, it.waar, v => { it.waar = v; markeer(); ent.herbouw(); }, '+ Andere plaats', () => openLijst('plaatsen', () => ent.herbouw()))));
+        if (!sec.lvs) {
+          delen.push(h('div', { class: 'veld' }, h('span', { class: 'lbl' }, 'Bijlagen'),
+            (it.bijlagen || []).map(b => h('div', { class: 'bijlage' }, icon('file'),
+              h('button', { class: 'naam', type: 'button', onclick: () => openBijlage(b) }, h('span', {}, b.naam), h('small', {}, grootte(b.grootte))),
+              h('button', { class: 'x', type: 'button', 'aria-label': 'Bijlage verwijderen', onclick: async () => {
+                if (!await vraag('Bijlage "' + b.naam + '" verwijderen?', 'Verwijderen', true)) return;
+                it.bijlagen = it.bijlagen.filter(x => x !== b); markeer(); ent.herbouw();
+              } }, icon('x')))),
+            h('button', { class: 'actie', type: 'button', onclick: () => { bijlageDoel = { it, ent }; $('bijlageInput').value = ''; $('bijlageInput').click(); } }, icon('clip'), 'Bijlage of foto toevoegen')));
+        }
+        const acties = [];
+        if (sec.check && sec.verplaats !== false && !bron) {
+          const doel = volgendeSchooldag(datum);
+          acties.push(h('button', { class: 'actie', type: 'button', onclick: () => {
+            if (!heeftInhoud(it)) { toast('Vul eerst iets in.'); return; }
+            sluitSheet(() => naarMorgen([it]));
+          } }, icon('arrow'), h('span', {}, 'Naar volgende schooldag', h('small', {}, dagNaam(doel) + ' ' + dagMaand(doel)))));
+        }
+        if (sec.vast) acties.push(h('button', { class: 'actie', type: 'button', onclick: () => bewaarAlsVast(it) }, icon('bookmark'), 'Bewaren als vaste taak'));
+        acties.push(h('button', { class: 'actie rood', type: 'button', onclick: async () => {
+          const extra = sec.inhaal ? '\n\nHij verdwijnt dan ook op de andere dag.' : '';
+          if (heeftInhoud(it) && !await vraag('Deze regel verwijderen?' + extra, 'Verwijderen', true)) return;
+          const d = data.dagen[dagKey];
+          if (d) { d.items = d.items.filter(x => x !== it); ruimOp(dagKey); }
+          markeer();
+          sluitSheet();
+        } }, icon('trash'), 'Verwijderen'));
+        delen.push(h('div', { style: 'margin-top:6px' }, acties));
+        return delen;
+      }
+    });
+  }
+
+  function naarMorgen(lijst) {
+    const doel = volgendeSchooldag(datum);
+    const dag = data.dagen[datum];
+    if (!dag || !lijst.length) return;
+    genereer(doel);
+    const doelDag = getDag(doel, true);
+    for (const it of lijst) {
+      dag.items = dag.items.filter(i => i !== it);
+      it.gedaan = false;
+      if (!it.van) it.van = datum;
+      doelDag.items.push(it);
+    }
+    ruimOp(datum);
+    markeer(); render();
+    toast((lijst.length === 1 ? '1 taak' : lijst.length + ' taken') + ' verplaatst naar ' + dagNaam(doel) + ' ' + dagMaand(doel) + '.');
+  }
+  async function doorschuiven() {
+    const dag = data.dagen[datum];
+    const open = dag ? dag.items.filter(i => SECTIE[i.sectie].check && SECTIE[i.sectie].verplaats !== false && !i.gedaan && heeftInhoud(i)) : [];
+    if (!open.length) { toast('Er zijn geen open taken op deze dag.'); return; }
+    const doel = volgendeSchooldag(datum);
+    if (!await vraag(open.length + ' open ' + (open.length === 1 ? 'taak' : 'taken') + ' verplaatsen naar ' + dagNaam(doel) + ' ' + langeDatum(doel) + '?\n\nInhaaltoetsen en LVS-regels blijven staan.', 'Verplaatsen')) return;
+    naarMorgen(open);
+  }
+  function bewaarAlsVast(it) {
+    const tekst = (it.tekst || '').trim();
+    if (!tekst) { toast('Vul eerst een omschrijving in.'); return; }
+    if (data.sjablonen.some(s => s.sectie === it.sectie && s.tekst === tekst && (s.klas || '') === (it.klas || ''))) { toast('Deze taak staat al bij je vaste taken.'); return; }
+    data.sjablonen.push({ id: uid(), sectie: it.sectie, tekst, klas: it.klas || '', aantal: it.aantal || '', herhaal: false, dagen: [], vanaf: datum });
+    markeer();
+    toast('Bewaard bij je vaste taken.');
+  }
+
+  async function kopieer(tekst) {
+    let ok = false;
+    try { await navigator.clipboard.writeText(tekst); ok = true; } catch (e) { /* reserve hieronder */ }
+    if (!ok) {
+      const t = h('textarea', { style: 'position:fixed;top:0;left:0;opacity:0', readonly: true });
+      t.value = tekst; document.body.append(t); t.select(); t.setSelectionRange(0, tekst.length);
+      try { ok = document.execCommand('copy'); } catch (e) { ok = false; }
+      t.remove();
+    }
+    toast(ok ? 'Gekopieerd. Plak de tekst in het LVS.' : 'Kopiëren lukte niet. Houd je vinger op de tekst om te selecteren.');
+  }
+
+  // ---------- Bijlagen ----------
+  let bijlageDoel = null;
+  function leesAlsDataURL(f) {
+    return new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result); r.onerror = () => rej(r.error); r.readAsDataURL(f); });
+  }
+  $('bijlageInput').addEventListener('change', async e => {
+    const doel = bijlageDoel;
+    const files = [...e.target.files];
+    if (!doel || !files.length) return;
+    let n = 0;
+    for (const f of files) {
+      if (f.size > MAX_BIJLAGE) { toast('"' + f.name + '" is groter dan 25 MB.'); continue; }
+      try { doel.it.bijlagen.push({ id: uid(), naam: f.name || 'foto.jpg', type: f.type || '', grootte: f.size, data: await leesAlsDataURL(f) }); n++; }
+      catch (err) { toast('"' + f.name + '" kon niet gelezen worden.'); }
+    }
+    if (n) { markeer(); if (doel.ent) doel.ent.herbouw(); toast(n === 1 ? 'Bijlage toegevoegd.' : n + ' bijlagen toegevoegd.'); }
+  });
+  function openBijlage(b) {
+    try {
+      const bin = atob(b.data.slice(b.data.indexOf(',') + 1));
+      const arr = new Uint8Array(bin.length);
+      for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+      const type = b.type || 'application/octet-stream';
+      const url = URL.createObjectURL(new Blob([arr], { type }));
+      const a = h('a', { href: url, target: '_blank', rel: 'noopener' });
+      if (!/^(application\/pdf|image\/|text\/)/.test(type)) a.setAttribute('download', b.naam);
+      document.body.append(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 60000);
+    } catch (e) { toast('Deze bijlage kon niet geopend worden.'); }
+  }
+
+  // ---------- Menu ----------
+  function openMenu() {
+    const doel = volgendeSchooldag(datum);
+    const ga = fn => () => sluitSheet(fn);
+    openSheet({
+      titel: 'Menu',
+      bouw: () => [
+        h('div', { class: 'groepkop' }, 'Instellingen'),
+        h('button', { class: 'actie', type: 'button', onclick: ga(() => openLijst('klassen')) }, icon('users'), h('span', {}, 'Klassen', h('small', {}, data.klassen.length ? data.klassen.join(', ') : 'Nog geen klassen')) ),
+        h('button', { class: 'actie', type: 'button', onclick: ga(() => openVasteTaken()) }, icon('repeat'), h('span', {}, 'Vaste taken', h('small', {}, data.sjablonen.length + ' bewaard'))),
+        h('button', { class: 'actie', type: 'button', onclick: ga(() => openLvsTeksten()) }, icon('text'), h('span', {}, 'LVS-redenen en teksten')),
+        h('button', { class: 'actie', type: 'button', onclick: ga(() => openLijst('plaatsen')) }, icon('pin'), h('span', {}, 'Plaatsen voor inhaaltoetsen')),
+        h('div', { class: 'groepkop' }, 'Deze dag'),
+        h('button', { class: 'actie', type: 'button', onclick: ga(doorschuiven) }, icon('forward'), h('span', {}, 'Open taken doorschuiven', h('small', {}, 'naar ' + dagNaam(doel) + ' ' + dagMaand(doel)))),
+        h('div', { class: 'groepkop' }, 'Gegevens'),
+        h('button', { class: 'actie', type: 'button', onclick: ga(exporteer) }, icon('upload'), h('span', {}, 'Back-up maken', h('small', {}, 'Ook om je gegevens naar de pc-planner te sturen'))),
+        h('button', { class: 'actie', type: 'button', onclick: ga(() => { $('importInput').value = ''; $('importInput').click(); }) }, icon('download'), h('span', {}, 'Back-up of pc-planner inladen')),
+        h('button', { class: 'actie', type: 'button', onclick: ga(openInstallHulp) }, icon('phone'), h('span', {}, 'Op je startscherm zetten'))
+      ]
+    });
+  }
+
+  // Klassen of plaatsen
+  function openLijst(soort, naSluiten) {
+    const isKlas = soort === 'klassen';
+    const lijst = () => isKlas ? data.klassen : data.inhaalPlaatsen;
+    let invoer;
+    const voegToe = ent => {
+      const delen = isKlas ? invoer.value.split(/[,;]+/) : [invoer.value];
+      let n = 0;
+      for (const raw of delen) {
+        const v = raw.trim();
+        if (!v || lijst().some(x => x.toLowerCase() === v.toLowerCase())) continue;
+        lijst().push(v); n++;
+      }
+      if (n) { if (isKlas) sorteerKlassen(); markeer(); }
+      else if (invoer.value.trim()) toast('Die staat er al.');
+      invoer.value = '';
+      ent.herbouw();
+      const nieuw = ent.body.querySelector('input'); if (nieuw) nieuw.focus();
+    };
+    openSheet({
+      titel: isKlas ? 'Klassen' : 'Plaatsen voor inhaaltoetsen',
+      onClose: () => { render(); if (naSluiten) naSluiten(); },
+      bouw: ent => {
+        invoer = h('input', { class: 'inp', type: 'text', autocomplete: 'off', placeholder: isKlas ? 'bv. 3A of 3A, 3B, 4C' : 'bv. Op mijn bureau', 'aria-label': isKlas ? 'Nieuwe klas' : 'Nieuwe plaats',
+          onkeydown: e => { if (e.key === 'Enter') { e.preventDefault(); voegToe(ent); } } });
+        return [
+          h('div', { class: 'veld rijform' }, invoer, h('button', { type: 'button', onclick: () => voegToe(ent) }, 'Toevoegen')),
+          lijst().length ? h('div', {}, lijst().map(v => h('div', { class: 'lijstrij' }, h('span', { class: 't' }, v),
+            h('button', { class: 'x', type: 'button', 'aria-label': v + ' verwijderen', onclick: () => {
+              if (isKlas) data.klassen = data.klassen.filter(x => x !== v); else data.inhaalPlaatsen = data.inhaalPlaatsen.filter(x => x !== v);
+              markeer(); ent.herbouw();
+            } }, icon('trash')))))
+            : h('div', { class: 'info' }, isKlas ? 'Nog geen klassen. Typ een klas en tik op Toevoegen.' : 'Nog geen plaatsen.')
+        ];
+      }
+    });
+  }
+
+  // Vaste taken
+  function herhaalTekst(sj) {
+    if (!sj.herhaal || !sj.dagen || !sj.dagen.length) return 'Geen herhaling';
+    return 'Elke ' + [...sj.dagen].sort().map(d => DAGKORT[d]).join(', ');
+  }
+  function openVasteTaken() {
+    openSheet({
+      titel: 'Vaste taken',
+      onClose: render,
+      bouw: ent => {
+        const delen = [h('button', { class: 'actie primair', type: 'button', onclick: () => openSjabloon(null, () => ent.herbouw()) }, icon('plus'), 'Nieuwe vaste taak')];
+        if (!data.sjablonen.length) delen.push(h('div', { class: 'info' }, 'Nog geen vaste taken. Je kunt ook een ingevulde regel bewaren met "Bewaren als vaste taak".'));
+        for (const sec of SECTIES.filter(s => s.vast)) {
+          const l = data.sjablonen.filter(s => s.sectie === sec.id);
+          if (!l.length) continue;
+          delen.push(h('div', { class: 'groepkop' }, sec.titel));
+          delen.push(h('div', {}, l.map(sj => h('div', { class: 'lijstrij' },
+            h('button', { class: 't', type: 'button', style: 'border:0;background:none;text-align:left;padding:6px 0', onclick: () => openSjabloon(sj, () => ent.herbouw()) },
+              sj.tekst, h('small', {}, [sj.klas, sj.aantal ? sj.aantal + '×' : '', herhaalTekst(sj)].filter(Boolean).join(' · '))),
+            h('button', { class: 'x', type: 'button', 'aria-label': 'Verwijderen', onclick: async () => {
+              if (!await vraag('Vaste taak "' + sj.tekst + '" verwijderen?\n\nTaken die al in je planner staan, blijven staan.', 'Verwijderen', true)) return;
+              data.sjablonen = data.sjablonen.filter(x => x !== sj); markeer(); ent.herbouw();
+            } }, icon('trash'))))));
+        }
+        return delen;
+      }
+    });
+  }
+  function openSjabloon(sj, naSluiten) {
+    const c = sj ? { ...sj, dagen: [...(sj.dagen || [])] } : { sectie: 'print', tekst: '', klas: '', aantal: '', herhaal: false, dagen: [], vanaf: datum };
+    if (!c.vanaf) c.vanaf = datum;
+    openSheet({
+      titel: sj ? 'Vaste taak aanpassen' : 'Nieuwe vaste taak',
+      knop: 'Bewaren',
+      onClose: () => { if (naSluiten) naSluiten(); },
+      onKlaar: () => {
+        c.tekst = (c.tekst || '').trim();
+        if (!c.tekst) { toast('Vul een omschrijving in.'); return false; }
+        if (c.herhaal && !c.dagen.length) { toast('Kies minstens één dag om te herhalen.'); return false; }
+        const obj = { sectie: c.sectie, tekst: c.tekst, klas: c.klas || '', aantal: c.sectie === 'print' ? (c.aantal || '') : '', herhaal: c.herhaal, dagen: c.herhaal ? c.dagen : [], vanaf: c.herhaal ? c.vanaf : '' };
+        if (sj) Object.assign(sj, obj); else data.sjablonen.push({ id: uid(), ...obj });
+        markeer();
+        toast(sj ? 'Vaste taak aangepast.' : 'Vaste taak toegevoegd.');
+      },
+      bouw: ent => [
+        h('div', { class: 'veld' }, h('span', { class: 'lbl' }, 'Blok'),
+          h('div', { class: 'chips' }, SECTIES.filter(s => s.vast).map(s => h('button', { class: 'chipk' + (c.sectie === s.id ? ' aan' : ''), type: 'button', onclick: () => { c.sectie = s.id; ent.herbouw(); } }, s.titel)))),
+        h('div', { class: 'veld' }, h('label', { class: 'lbl', for: 'sj-t' }, 'Omschrijving'),
+          h('input', { id: 'sj-t', class: 'inp', type: 'text', value: c.tekst, placeholder: 'bv. Toetsen verbeteren', oninput: e => { c.tekst = e.target.value; } })),
+        h('div', { class: 'veld' }, h('span', { class: 'lbl' }, 'Vaste klas (niet verplicht)'),
+          chipKeuze(data.klassen, c.klas, v => { c.klas = v; ent.herbouw(); })),
+        c.sectie === 'print' ? h('div', { class: 'veld' }, h('label', { class: 'lbl', for: 'sj-a' }, 'Aantal keer'),
+          h('input', { id: 'sj-a', class: 'inp', type: 'number', inputmode: 'numeric', min: '1', value: c.aantal, style: 'max-width:140px', oninput: e => { c.aantal = e.target.value; } })) : null,
+        h('div', { class: 'veld' },
+          h('label', { class: 'schakel' }, 'Automatisch herhalen', h('input', { type: 'checkbox', checked: !!c.herhaal, onchange: e => { c.herhaal = e.target.checked; ent.herbouw(); } })),
+          c.herhaal ? h('div', {},
+            h('div', { class: 'chips', style: 'margin-top:8px' }, [1, 2, 3, 4, 5].map(d => h('button', { class: 'chipk' + (c.dagen.includes(d) ? ' aan' : ''), type: 'button',
+              onclick: () => { c.dagen = c.dagen.includes(d) ? c.dagen.filter(x => x !== d) : [...c.dagen, d]; ent.herbouw(); } }, DAGKORT[d]))),
+            h('label', { class: 'lbl', for: 'sj-v', style: 'margin-top:14px' }, 'Vanaf'),
+            h('input', { id: 'sj-v', class: 'inp', type: 'date', value: c.vanaf, style: 'max-width:200px', onchange: e => { c.vanaf = e.target.value || datum; } })) : null)
+      ]
+    });
+  }
+
+  // LVS-teksten
+  function openLvsTeksten(naSluiten) {
+    openSheet({
+      titel: 'LVS-redenen en teksten',
+      onClose: () => { render(); if (naSluiten) naSluiten(); },
+      bouw: ent => [
+        h('div', { class: 'info' }, 'De planner vult automatisch in: ', h('code', {}, '{voornaam}'), ', ', h('code', {}, '{dag}'), ' (bv. woensdag) en ', h('code', {}, '{datum}'), ' (bv. 11/11/2026).'),
+        data.lvsRedenen.map(r => h('div', { class: 'redenkaart' },
+          h('div', { class: 'kop' },
+            h('input', { class: 'inp', type: 'text', value: r.naam, 'aria-label': 'Naam van de reden', oninput: e => { r.naam = e.target.value; markeer(); } }),
+            r.voorstel ? h('span', { class: 'badge', title: 'Voorstel: pas aan of laat zo' }, 'voorstel') : null,
+            h('button', { class: 'x', type: 'button', 'aria-label': 'Reden verwijderen', onclick: async () => {
+              if (!await vraag('Reden "' + r.naam + '" verwijderen?', 'Verwijderen', true)) return;
+              data.lvsRedenen = data.lvsRedenen.filter(x => x !== r); markeer(); ent.herbouw();
+            } }, icon('trash'))),
+          h('textarea', { class: 'inp', rows: '4', value: r.tekst, 'aria-label': 'Tekst', oninput: e => { r.tekst = e.target.value; delete r.voorstel; markeer(); } }))),
+        h('button', { class: 'actie primair', type: 'button', onclick: () => { data.lvsRedenen.push({ id: uid(), naam: 'Nieuwe reden', tekst: '{voornaam} heeft op {dag} {datum} …' }); markeer(); ent.herbouw(); ent.body.scrollTop = ent.body.scrollHeight; } }, icon('plus'), 'Reden toevoegen'),
+        h('button', { class: 'actie', type: 'button', onclick: async () => {
+          if (!await vraag('De 7 standaardredenen terugzetten?\n\nJe eigen redenen blijven. Aangepaste standaardteksten worden overschreven.', 'Terugzetten')) return;
+          for (const st of kopieLvs()) { const i = data.lvsRedenen.findIndex(r => r.id === st.id); if (i >= 0) data.lvsRedenen[i] = st; else data.lvsRedenen.push(st); }
+          const volg = LVS_STANDAARD.map(r => r.id);
+          data.lvsRedenen.sort((a, b) => { const x = volg.indexOf(a.id), y = volg.indexOf(b.id); return (x < 0 ? 99 : x) - (y < 0 ? 99 : y); });
+          markeer(); ent.herbouw();
+        } }, icon('undo'), 'Standaardredenen terugzetten')
+      ]
+    });
+  }
+
+  // ---------- Back-up ----------
+  async function exporteer() {
+    await bewaar();
+    const naam = 'planner-backup-' + vandaag() + '.json';
+    const json = JSON.stringify(data);
+    let file = null;
+    try { file = new File([json], naam, { type: 'application/json' }); } catch (e) { file = null; }
+    if (file && navigator.canShare && navigator.canShare({ files: [file] })) {
+      try { await navigator.share({ files: [file], title: 'Lerarenplanner back-up' }); toast('Back-up gedeeld.'); return; }
+      catch (e) { if (e && e.name === 'AbortError') return; }
+    }
+    const url = URL.createObjectURL(new Blob([json], { type: 'application/json' }));
+    const a = h('a', { href: url, download: naam });
+    document.body.append(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 10000);
+    toast('Back-up gedownload: ' + naam);
+  }
+  $('importInput').addEventListener('change', async e => {
+    const f = e.target.files[0];
+    if (!f) return;
+    let obj;
+    try {
+      const tekst = await f.text();
+      if (tekst.trim().startsWith('{')) obj = JSON.parse(tekst);
+      else {
+        const doc = new DOMParser().parseFromString(tekst, 'text/html');
+        const s = doc.getElementById('planner-data');
+        if (!s) throw new Error('geen planner');
+        obj = JSON.parse(s.textContent || '{}');
+      }
+    } catch (err) { toast('Dit bestand is geen lerarenplanner of back-up.'); return; }
+    if (!await vraag('Alle gegevens op deze gsm vervangen door de gegevens uit "' + f.name + '"?', 'Vervangen', true)) return;
+    data = normaliseer(obj);
+    await bewaar();
+    render();
+    toast('Gegevens ingeladen.');
+  });
+
+  // ---------- Installeren ----------
+  let installPrompt = null;
+  const isStandalone = () => window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+  const isIOS = () => /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); installPrompt = e; render(); });
+  window.addEventListener('appinstalled', () => { installPrompt = null; render(); });
+  function bannerVerborgen() { try { return localStorage.getItem('planner-installbanner') === 'weg'; } catch (e) { return false; } }
+  function installBanner() {
+    if (isStandalone() || bannerVerborgen()) return null;
+    return h('div', { class: 'banner' },
+      h('img', { src: 'icon-192.png', alt: '' }),
+      h('div', {}, h('b', {}, 'Zet de planner op je startscherm'), h('small', {}, 'Dan opent hij als een app, ook zonder internet.')),
+      h('button', { class: 'kleinknop', type: 'button', onclick: async () => {
+        if (installPrompt) { installPrompt.prompt(); try { await installPrompt.userChoice; } catch (e) { /* */ } installPrompt = null; render(); }
+        else openInstallHulp();
+      } }, installPrompt ? 'Installeren' : 'Hoe?'),
+      h('button', { class: 'x', type: 'button', 'aria-label': 'Verbergen', onclick: () => { try { localStorage.setItem('planner-installbanner', 'weg'); } catch (e) { /* */ } render(); } }, icon('x')));
+  }
+  function openInstallHulp() {
+    const ios = isIOS();
+    openSheet({
+      titel: 'Op je startscherm zetten',
+      bouw: () => [
+        isStandalone() ? h('div', { class: 'info cyaan' }, 'De planner staat al op je startscherm. Je gebruikt hem nu als app.') : null,
+        h('div', { class: 'groepkop' }, ios ? 'iPhone (je toestel)' : 'iPhone'),
+        h('ol', { class: 'stappen' },
+          h('li', {}, 'Open deze pagina in ', h('b', {}, 'Safari'), '.'),
+          h('li', {}, 'Tik op de knop ', h('b', {}, 'Deel'), ' (vierkantje met een pijl omhoog).'),
+          h('li', {}, 'Kies ', h('b', {}, 'Zet op beginscherm'), ' en tik op ', h('b', {}, 'Voeg toe'), '.')),
+        h('div', { class: 'groepkop' }, ios ? 'Android' : 'Android (je toestel)'),
+        h('ol', { class: 'stappen' },
+          h('li', {}, 'Open deze pagina in ', h('b', {}, 'Chrome'), '.'),
+          h('li', {}, 'Tik op ', h('b', {}, '⋮'), ' rechtsboven.'),
+          h('li', {}, 'Kies ', h('b', {}, 'App installeren'), ' of ', h('b', {}, 'Toevoegen aan startscherm'), '.')),
+        h('div', { class: 'info geel', style: 'margin-top:12px' }, 'Je gegevens staan alleen op deze gsm. Maak af en toe een back-up via het menu.')
+      ]
+    });
+  }
+
+  // ---------- Kop-knoppen ----------
+  $('vorige').append(icon('chevL'));
+  $('volgende').append(icon('chevR'));
+  $('menuKnop').append(icon('more'));
+  $('vorige').addEventListener('click', () => { datum = verschuif(datum, -1); render(); });
+  $('volgende').addEventListener('click', () => { datum = verschuif(datum, 1); render(); });
+  $('datum').addEventListener('change', e => { if (e.target.value) { datum = e.target.value; render(); } });
+  $('menuKnop').addEventListener('click', openMenu);
+
+  // Na middernacht of na lang in de achtergrond: datum en weergave bijwerken
+  let laatsteVandaag = vandaag();
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState !== 'visible') return;
+    const nu = vandaag();
+    if (nu !== laatsteVandaag) { if (datum === laatsteVandaag) datum = nu; laatsteVandaag = nu; if (!stapel.length) render(); }
+  });
+
+  // ---------- Starten ----------
+  (async function start() {
+    try { await Opslag.open(); } catch (e) { Opslag.db = null; }
+    try { const opgeslagen = await Opslag.get('data'); if (opgeslagen) data = normaliseer(opgeslagen); } catch (e) { /* lege planner */ }
+    render();
+    if (navigator.storage && navigator.storage.persist) { try { await navigator.storage.persist(); } catch (e) { /* */ } }
+    if ('serviceWorker' in navigator && location.protocol !== 'file:') {
+      try { await navigator.serviceWorker.register('sw.js'); } catch (e) { /* offline werken niet beschikbaar */ }
+    }
+  })();
+})();
+</script>
+</body>
+</html>

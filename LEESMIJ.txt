@@ -1,0 +1,21 @@
+LERARENPLANNER - GSM-VERSIE
+===========================
+
+Deze map bevat de app. Zet ALLE bestanden (niet de zip zelf) online,
+bijvoorbeeld gratis met GitHub Pages:
+
+1. Maak een gratis account op github.com.
+2. Klik op "New repository". Naam: planner. Kies "Public". Klik "Create repository".
+3. Klik op "uploading an existing file" en sleep alle bestanden uit deze map erin.
+   Klik onderaan op "Commit changes".
+4. Ga naar Settings > Pages. Bij "Branch" kies je "main" en "/ (root)". Klik "Save".
+5. Na 1 à 2 minuten staat je app op:
+   https://JOUW-GEBRUIKERSNAAM.github.io/planner/
+
+Op je gsm:
+- iPhone: open de link in Safari > Deel-knop > Zet op beginscherm.
+- Android: open de link in Chrome > menu (3 puntjes) > App installeren
+  of Toevoegen aan startscherm.
+
+Je gegevens staan alleen op je gsm, niet online.
+Maak af en toe een back-up via het menu van de app.
