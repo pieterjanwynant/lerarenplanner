@@ -1,10 +1,10 @@
 // Service worker: laat de planner ook zonder internet werken.
 // Verhoog het versienummer als je bestanden aanpast.
-const CACHE = 'lerarenplanner-v1';
+const CACHE = 'lerarenplanner-v2';
 const BESTANDEN = [
   './',
   './index.html',
-  './manifest.webmanifest',
+  './manifest.json',
   './icon-192.png',
   './icon-512.png',
   './icon-maskable-512.png',
@@ -23,7 +23,6 @@ self.addEventListener('activate', e => {
   );
 });
 
-// Eerst uit de cache (snel en offline), op de achtergrond bijwerken.
 self.addEventListener('fetch', e => {
   if (e.request.method !== 'GET') return;
   const url = new URL(e.request.url);
